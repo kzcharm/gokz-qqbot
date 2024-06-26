@@ -1,4 +1,4 @@
-# gokz-qqbot
+# kzcharm-qqbot
 
 ## How to start
 

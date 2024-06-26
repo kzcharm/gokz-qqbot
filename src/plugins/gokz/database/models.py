@@ -1,18 +1,16 @@
 from datetime import datetime
 
-from sqlalchemy import Integer
 from sqlmodel import Field, SQLModel, Column, DateTime, func
 
 
 class User(SQLModel, table=True):
-    __tablename__ = 'users'
-    id: int = Field(default=None, sa_column=Column(Integer, autoincrement=True))
-    qqid: int = Field(nullable=False, primary_key=True)
+    __tablename__ = 'qq_users'
+    qid: str = Field(nullable=False, primary_key=True)
     name: str
     steamid: str = Field(nullable=False)
-    mode: int = Field(nullable=False, default=2)
-    created_at: datetime = Field(default_factory=datetime.utcnow, sa_column=Column(DateTime, default=func.now(), nullable=False))
-    updated_at: datetime = Field(default_factory=datetime.utcnow, sa_column=Column(DateTime, default=func.now(), onupdate=func.now(), nullable=False))
+    mode: str = Field(nullable=False, default="kz_timer")
+    created_at: datetime = Field(default_factory=datetime.now, sa_column=Column(DateTime, default=func.now(), nullable=False))
+    updated_at: datetime = Field(default_factory=datetime.now, sa_column=Column(DateTime, default=func.now(), onupdate=func.now(), nullable=False))
 
 
 class Leaderboard(SQLModel, table=True):

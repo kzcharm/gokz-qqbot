@@ -1,3 +1,7 @@
+import difflib
+
+from src.plugins.gokz.utils.config import MAP_TIERS
+
 
 def format_kzmode(mode, form="full") -> int | str:
     """return kz_timer, kz_simple or kz_vanilla in the specified format"""
@@ -68,5 +72,23 @@ def format_runtime(time: float, cn=False) -> str:
     return formatted_time
 
 
+def search_map(map_name, threshold=0.2) -> list:
+    # First check for exact or substring matches
+    exact_or_substring_matches = [
+        map_ for map_ in MAP_TIERS.keys() if map_name in map_
+    ]
+
+    # If exact or substring matches are found, return them sorted by proximity
+    if exact_or_substring_matches:
+        exact_or_substring_matches.sort(key=lambda x: (x != map_name, x))
+        return exact_or_substring_matches
+
+    # If no exact or substring matches are found, use difflib to find similar matches
+    similar_matches = difflib.get_close_matches(
+        map_name, MAP_TIERS.keys(), n=5, cutoff=threshold
+    )
+    return similar_matches
+
+
 if __name__ == '__main__':
-    print(format_runtime(3700.1, True))
+    print(search_map("yes"))

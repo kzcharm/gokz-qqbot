@@ -17,11 +17,15 @@ def get_url():
     return f"mysql+pymysql://{user}:{password}@{server}:{port}/{db_name}"
 
 
-engine = create_engine(get_url(), echo=True)
+engine = create_engine(get_url())
 
 
 def create_db_and_tables():
     SQLModel.metadata.create_all(engine)
+
+
+def init_db():
+    pass
 
 
 if __name__ == '__main__':
