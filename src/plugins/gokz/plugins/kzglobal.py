@@ -18,13 +18,16 @@ kz = on_command('kz', aliases={'kzgo'})
 wr = on_command('wr')
 
 
+global_map = 'bkz_cakewalk'
+
+
 @wr.handle()
 async def _(event: Event, args: Message = CommandArg()):
     cd = CommandData(event, args)
     if cd.error:
         return await wr.finish(cd.error)
     if not cd.args:
-        return await wr.finish("🗺地图名都不给我怎么帮你查PB (￣^￣) ")
+        return await wr.finish("🗺地图名都不给我怎么帮你查WR (￣^￣) ")
 
     map_name = search_map(cd.args[0])[0]
     kz_mode = cd.mode
@@ -68,6 +71,9 @@ async def _(event: Event, args: Message = CommandArg()):
     combined_message = MessageSegment.image(map_img_url) + MessageSegment.text(content)
     await wr.send(combined_message)
 
+    if map_name == 'kz_hb_fafnir':
+        await wr.send(MessageSegment.record(Path('data/gokz/sound/fafnir.silk')))
+
 
 @kz.handle()
 async def handle_kz(bot: Bot, event: Event, args: Message = CommandArg()):
@@ -108,6 +114,9 @@ async def handle_pr(bot: Bot, event: Event, args: Message = CommandArg()):
         ║ 服务器:　{data['server_name']}
         ╚ {record_format_time(data['created_on'])} ═══""").strip()
 
+    global global_map
+    global_map = data['map_name']
+
     map_img_url = f'https://hk.axekz.com/images/maps/{data['map_name']}.jpg'
     combined_message = MessageSegment.image(map_img_url) + MessageSegment.text(content)
 
@@ -116,14 +125,17 @@ async def handle_pr(bot: Bot, event: Event, args: Message = CommandArg()):
 
 @pb.handle()
 async def map_pb(bot: Bot, event: Event, args: Message = CommandArg()):
+    global global_map
     cd = CommandData(event, args)
     if cd.error:
         return await pb.finish(cd.error)
 
     if not cd.args:
-        return await pb.finish("🗺地图名都不给我怎么帮你查PB (￣^￣) ")
-
-    map_name = search_map(cd.args[0])[0]
+        map_name = global_map
+        # return await pb.finish("🗺地图名都不给我怎么帮你查PB (￣^￣) ")
+    else:
+        map_name = search_map(cd.args[0])[0]
+        global_map = map_name
 
     content = dedent(f"""
         ╔ 地图:　{map_name}
