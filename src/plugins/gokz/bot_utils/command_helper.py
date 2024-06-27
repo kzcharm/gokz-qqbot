@@ -1,9 +1,8 @@
 import argparse
 import shlex
 from dataclasses import dataclass, field, asdict
+from typing import Optional, Tuple
 
-from nonebot.adapters.onebot.v11 import Event, Message
-from nonebot.params import CommandArg
 from sqlmodel import Session
 
 from ..database.db import engine
@@ -17,20 +16,25 @@ class CommandData:
     qid: str
     map_name: str
     steamid: str
-    steamid2: str | None = None
-    args: tuple = field(default_factory=tuple)
+    steamid2: Optional[str] = None
+    args: Tuple = field(default_factory=tuple)
     update: bool = False
-    error: str | None = None
+    error: Optional[str] = None
 
-    def __init__(self, event: Event, args: Message = CommandArg()):
+    def __init__(self, event, args):
         self.qid = event.get_user_id()
         parsed_args = parse_args(args.extract_plain_text())
+        if 'error' in parsed_args:
+            self.error = parsed_args['error']
+            print(f"Error during argument parsing: {self.error}")
+            return
 
         with Session(engine) as session:
-            user: User = session.get(User, self.qid)  # NOQA
+            user = session.get(User, self.qid)  # NOQA
 
             if not user or not user.steamid:
                 self.error = '客服小祥温馨提示您: 请先 "/bind steamid"'
+                print(self.error)
                 return
 
             qid = parsed_args.get('qid')
@@ -38,6 +42,7 @@ class CommandData:
                 user2 = session.get(User, qid)
                 if not user2 or not user2.steamid:
                     self.error = "你指定的用户未绑定steamid"
+                    print(self.error)
                     return
                 self.steamid = user2.steamid
                 self.steamid2 = user.steamid
@@ -63,7 +68,14 @@ def parse_args(text: str) -> dict:
     parser.add_argument('-q', '--qid', type=str, help='QQ ID')
     parser.add_argument('-u', '--update', action='store_true', help='Update flag')
 
-    args = parser.parse_args(shlex.split(text))
-    result = vars(args)
-    result['args'] = tuple(result['args'])
-    return result
+    try:
+        args = parser.parse_args(shlex.split(text))
+        result = vars(args)
+        result['args'] = tuple(result['args'])
+        return result
+    except argparse.ArgumentError as e:
+        return {'error': f'Argument error: {str(e)}'}
+    except SystemExit as e:
+        return {'error': f'未指定参数'}
+    except Exception as e:
+        return {'error': str(e)}
