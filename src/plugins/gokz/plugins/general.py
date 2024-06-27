@@ -1,10 +1,11 @@
+import json
 from pathlib import Path
 from textwrap import dedent
 
 from nonebot import on_command
 from nonebot.adapters.onebot.v11 import Bot, MessageEvent as Event, Message, MessageSegment
 from nonebot.params import CommandArg
-from sqlmodel import Session
+from sqlmodel import Session, select
 
 from ..bot_utils.command_helper import CommandData
 from ..database.db import engine, create_db_and_tables
@@ -38,6 +39,12 @@ async def bind_steamid(bot: Bot, event: Event, args: Message = CommandArg()):
     else:
         return await bind.finish(MessageSegment.reply(event.message_id) + "请输steamid")
 
+    # 阻止他们绑定前20玩家的steamid
+    top20 = json.load(open("data/gokz/json/top20_players.json"))
+    for player in top20:
+        if steamid == player["steamid"]:
+            return await bind.finish(MessageSegment.reply(event.message_id) + f"你是 {player['name']} 吗, 你就绑")
+
     with Session(engine) as session:
         rank: Leaderboard = session.get(Leaderboard, steamid)  # NOQA
         if not rank:
@@ -48,6 +55,12 @@ async def bind_steamid(bot: Bot, event: Event, args: Message = CommandArg()):
     qq_name = qq_info.get("nickname", 'Unknown')
 
     with Session(engine) as session:
+        # 阻止重复绑定
+        statement = select(User).where(User.steamid == steamid)
+        exist_user: User = session.exec(statement).one()
+        if exist_user:
+            return await bind.finish(MessageSegment.reply(event.message_id) + f"该steamid已经被 {exist_user.name} QQ号{exist_user.qid} 绑定 ")
+
         user = session.get(User, user_id)
         if user:
             user.name = qq_name
