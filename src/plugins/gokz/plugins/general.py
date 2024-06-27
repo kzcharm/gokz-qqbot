@@ -5,6 +5,7 @@ from textwrap import dedent
 from nonebot import on_command
 from nonebot.adapters.onebot.v11 import Bot, MessageEvent as Event, Message, MessageSegment
 from nonebot.params import CommandArg
+from sqlalchemy.exc import NoResultFound
 from sqlmodel import Session, select
 
 from ..bot_utils.command_helper import CommandData
@@ -56,10 +57,12 @@ async def bind_steamid(bot: Bot, event: Event, args: Message = CommandArg()):
 
     with Session(engine) as session:
         # 阻止重复绑定
-        statement = select(User).where(User.steamid == steamid)
-        exist_user: User = session.exec(statement).one()
-        if exist_user:
+        try:
+            statement = select(User).where(User.steamid == steamid)
+            exist_user: User = session.exec(statement).one()
             return await bind.finish(MessageSegment.reply(event.message_id) + f"该steamid已经被 {exist_user.name} QQ号{exist_user.qid} 绑定 ")
+        except NoResultFound:
+            pass
 
         user = session.get(User, user_id)
         if user:
