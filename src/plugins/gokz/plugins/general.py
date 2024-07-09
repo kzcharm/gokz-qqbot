@@ -1,4 +1,5 @@
 import json
+import re
 from pathlib import Path
 from textwrap import dedent
 
@@ -14,20 +15,19 @@ from ..database.models import User, Leaderboard
 from ..utils.kreedz import format_kzmode
 from ..utils.steam_user import conv_steamid
 
-
 create_db_and_tables()
 
 
 bind = on_command("bind", aliases={"绑定"})
 mode = on_command("mode", aliases={"模式"})
 test = on_command("test")
-help = on_command('help', aliases={"帮助"})
+help_ = on_command('help', aliases={"帮助"})
 
 
-@help.handle()
+@help_.handle()
 async def _():
     image_path = Path('data/gokz/help.png')
-    await help.send(MessageSegment.image(image_path))
+    await help_.send(MessageSegment.image(image_path))
 
 
 @bind.handle()
@@ -108,7 +108,17 @@ async def update_mode(event: Event, args: Message = CommandArg()):
 
 @test.handle()
 async def handle_first_receive(bot: Bot, event: Event, args: Message = CommandArg()):
-    cd = CommandData(event, args)
-    if cd.error:
-        return await bot.send(event, cd.error)
-    await bot.send(event, str(cd.to_dict()))
+    atmsg = event.get_message().copy()
+    for segment in atmsg:
+        if segment.type == 'at':
+            return await bot.send(event, segment.data['qq'])
+
+    mention_pattern = re.compile(r'\[CQ:at,qq=(\d+)\]')
+
+    mentioned_users = mention_pattern.findall(args.extract_plain_text())
+
+    if mentioned_users:
+        for user_id in mentioned_users:
+            await bot.send(event, f"Mentioned user ID: {user_id}")
+    else:
+        await bot.send(event, "No users mentioned.")

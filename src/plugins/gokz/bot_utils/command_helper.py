@@ -38,6 +38,13 @@ class CommandData:
                 return
 
             qid = parsed_args.get('qid')
+            if not qid:
+                atmsg = event.get_message().copy()
+                for segment in atmsg:
+                    if segment.type == 'at':
+                        qid = segment.data['qq']
+                        break
+
             if qid:
                 user2 = session.get(User, qid)
                 if not user2 or not user2.steamid:

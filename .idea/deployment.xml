@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="PublishConfigData" autoUpload="Always" promptOnRemoteOverwrite="CHECK_CONTENT" serverName="root@47.238.188.6:22 password" confirmBeforeUploading="false" notifyRemoteChanges="true">
+  <component name="PublishConfigData" autoUpload="Always" promptOnRemoteOverwrite="CHECK_CONTENT" serverName="axekz-hk2-gokz-qqbot" confirmBeforeUploading="false" notifyRemoteChanges="true">
     <option name="confirmBeforeUploading" value="false" />
     <serverData>
-      <paths name="root@47.238.188.6:22 password">
+      <paths name="axekz-hk2-gokz-qqbot">
         <serverdata>
           <mappings>
             <mapping deploy="/root/gokz-qqbot/kzcharm-qqbot" local="$PROJECT_DIR$" web="/" />

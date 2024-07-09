@@ -11,6 +11,7 @@ from ..utils.config import MAP_TIERS
 from ..utils.formatter import format_gruntime, record_format_time
 from ..utils.kreedz import search_map
 from ..utils.kz.screenshot import vnl_screenshot_async, kzgoeu_screenshot_async, random_card
+from ..utils.map_img_url import get_map_img_url
 
 pb = on_command('pb', aliases={'personal-best'})
 pr = on_command('pr')
@@ -67,8 +68,7 @@ async def _(event: Event, args: Message = CommandArg()):
     except IndexError:
         content += f"\n未发现裸跳记录:"
 
-    map_img_url = f'https://hk.axekz.com/images/maps/{map_name}.jpg'
-    combined_message = MessageSegment.image(map_img_url) + MessageSegment.text(content)
+    combined_message = MessageSegment.image(get_map_img_url(map_name)) + MessageSegment.text(content)
     await wr.send(combined_message)
 
     if map_name == 'kz_hb_fafnir':
@@ -117,8 +117,7 @@ async def handle_pr(bot: Bot, event: Event, args: Message = CommandArg()):
     global global_map
     global_map = data['map_name']
 
-    map_img_url = f'https://hk.axekz.com/images/maps/{data['map_name']}.jpg'
-    combined_message = MessageSegment.image(map_img_url) + MessageSegment.text(content)
+    combined_message = MessageSegment.image(get_map_img_url(data['map_name'])) + MessageSegment.text(content)
 
     await bot.send(event, combined_message)
 
@@ -176,7 +175,6 @@ async def map_pb(bot: Bot, event: Event, args: Message = CommandArg()):
         logger.info(repr(e))
         content += f"\n╚ 未发现裸跳记录"
 
-    map_img_url = f'https://hk.axekz.com/images/maps/{map_name}.jpg'
-    combined_message = MessageSegment.image(map_img_url) + MessageSegment.text(content)
+    combined_message = MessageSegment.image(get_map_img_url(map_name)) + MessageSegment.text(content)
 
     await bot.send(event, combined_message)
