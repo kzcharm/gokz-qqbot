@@ -39,8 +39,8 @@ class CommandData:
 
             qid = parsed_args.get('qid')
             if not qid:
-                atmsg = event.get_message().copy()
-                for segment in atmsg:
+                at_msg = event.get_message().copy()
+                for segment in at_msg:
                     if segment.type == 'at':
                         qid = segment.data['qq']
                         break
@@ -49,8 +49,6 @@ class CommandData:
                 user2 = session.get(User, qid)
                 if not user2 or not user2.steamid:
                     self.error = "你指定的用户未绑定steamid"
-                    print(self.error)
-                    return
                 self.steamid = user2.steamid
                 self.steamid2 = user.steamid
             else:
@@ -82,7 +80,7 @@ def parse_args(text: str) -> dict:
         return result
     except argparse.ArgumentError as e:
         return {'error': f'Argument error: {str(e)}'}
-    except SystemExit as e:
+    except SystemExit:
         return {'error': f'未指定参数'}
     except Exception as e:
         return {'error': str(e)}

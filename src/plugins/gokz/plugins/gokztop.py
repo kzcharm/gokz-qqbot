@@ -2,7 +2,7 @@ from datetime import datetime
 from textwrap import dedent
 
 import aiohttp
-from nonebot import on_command, Bot
+from nonebot import on_command, Bot, logger
 from nonebot.adapters.onebot.v11 import MessageEvent as Event, Message, MessageSegment
 from nonebot.params import CommandArg
 
@@ -133,7 +133,7 @@ async def check_cheng_fen(event: Event, args: Message = CommandArg()):
             url = f'{BASE}records/{cd.steamid}?mode={cd.mode}'
 
     records = await fetch_get(url)
-    data = count_servers(records)
+    data = count_servers(records, limit=10)
     content = dedent(f"""
         ════成分查询════
         玩家:　　{records[0]['player_name']}
@@ -152,11 +152,15 @@ async def gokz_top_rank(event: Event, args: Message = CommandArg()):
     if cd.error:
         return await rank.finish(MessageSegment.reply(event.message_id) + cd.error)
 
+    url = f'{BASE}leaderboard/{cd.steamid}?mode={cd.mode}'
+    logger.warning(f"querying {url} failed")
     try:
-        rank_data = await fetch_get(f'{BASE}leaderboard/{cd.steamid}?mode={cd.mode}')
+        rank_data = await fetch_get(url, timeout=10)
+        if rank_data.get('detail'):
+            return await rank.finish(MessageSegment.reply(event.message_id) + rank_data.get('detail'))
         data = LeaderboardData.from_dict(rank_data)
-    except aiohttp.ClientError:
-        return await rank.finish("无法访问排行榜服务，请稍后再试。")
+    except AttributeError:
+        return await rank.finish("获取数据失败，请稍后再试。")
     except KeyError:
         return await rank.finish("无法解析排行榜数据，请稍后再试。")
 

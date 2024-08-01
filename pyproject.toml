@@ -7,10 +7,8 @@ requires-python = ">=3.8, <4.0"
 
 [tool.nonebot]
 adapters = [
-    # { name = "QQ", module_name = "nonebot.adapters.qq" },
     { name = "OneBot V11", module_name = "nonebot.adapters.onebot.v11" },
-#    { name = "Console", module_name = "nonebot.adapters.console" }
 ]
-plugins = ["nonebot_plugin_setu4", "nonebot_plugin_addFriend", "nonebot_plugin_localstore"]
+plugins = ["nonebot_plugin_localstore", "nonebot_plugin_addFriend", "nonebot_plugin_status"]
 plugin_dirs = ["src/plugins"]
 builtin_plugins = ["echo"]
