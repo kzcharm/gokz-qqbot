@@ -1,10 +1,10 @@
 from pathlib import Path
 
 import nonebot
-from nonebot import logger
 from nonebot import get_plugin_config
-from nonebot.log import logger_id, default_format
-from nonebot.plugin import PluginMetadata, Plugin
+from nonebot import logger
+from nonebot.log import default_format
+from nonebot.plugin import PluginMetadata
 
 from .config import Config
 
