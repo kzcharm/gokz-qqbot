@@ -33,7 +33,7 @@ class CommandData:
             user = session.get(User, self.qid)  # NOQA
 
             if not user or not user.steamid:
-                self.error = '客服小祥温馨提示您: 请先 "/bind steamid"'
+                self.error = '客服小祥温馨提示您: 请先 /bind <steamid>'
                 print(self.error)
                 return
 

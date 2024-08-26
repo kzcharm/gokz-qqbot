@@ -140,9 +140,9 @@ def vnl_screenshot(steamid, force_update=False):
 
     # Crop the image
     left = 0
-    top = 110
+    top = 65
     right = width - 15
-    bottom = height - 115
+    bottom = height - 95
     cropped_img = img.crop((left, top, right, bottom))
 
     # Save the cropped screenshot to the cache directory

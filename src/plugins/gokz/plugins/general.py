@@ -9,7 +9,6 @@ from nonebot.params import CommandArg
 from sqlalchemy.exc import NoResultFound
 from sqlmodel import Session, select
 
-from ..bot_utils.command_helper import CommandData
 from ..database.db import engine, create_db_and_tables
 from ..database.models import User, Leaderboard
 from ..utils.kreedz import format_kzmode

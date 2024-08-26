@@ -140,4 +140,4 @@ dmypy.json
 .pytype/
 
 # End of https://www.toptal.com/developers/gitignore/api/python!/src/plugins/track_lee/
-src/plugins/track_lee/
+track_lee/
