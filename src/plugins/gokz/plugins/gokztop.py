@@ -4,10 +4,12 @@ from textwrap import dedent
 
 import aiohttp
 from nonebot import on_command, Bot, logger
-from nonebot.adapters.onebot.v11 import MessageEvent as Event, Message, MessageSegment, GroupMessageEvent
+from nonebot.adapters.onebot.v11 import MessageEvent as Event, Message, MessageSegment, GroupMessageEvent, \
+    PrivateMessageEvent
 from nonebot.params import CommandArg
 from nonebot.permission import SUPERUSER
 
+from .kzglobal import group_map_names, DEFAULT_MAP, private_map_names
 from ..api_call.dataclasses import LeaderboardData
 from ..api_call.helper import fetch_get
 from ..bot_utils.command_helper import CommandData
@@ -16,15 +18,16 @@ from ..database.models import User
 from ..utils.formatter import format_gruntime, diff_seconds_to_time
 from ..utils.kreedz import search_map
 from ..utils.kz.records import count_servers
-from ..utils.steam_user import conv_steamid
+from ..utils.steam_user import convert_steamid
+
+BASE = "https://api.gokz.top/"
 
 rank = on_command('rank', aliases={'排行'})
-progress = on_command('pg', aliases={'progress', 'mp', '进度', 'jd', "mapprogress"})
+progress = on_command('mp', aliases={'progress', '进度'})
 ccf = on_command('ccf', aliases={'查成分'})
 pk = on_command('pk', aliases={'pk'})
 find = on_command('find', aliases={'查找'})
 group_rank = on_command('群排名', aliases={'group_rank'}, permission=SUPERUSER)
-BASE = "https://api.gokz.top/"
 
 
 @group_rank.handle()
@@ -55,7 +58,7 @@ async def _(bot: Bot, session: SessionDep, event: GroupMessageEvent):
     content = ''
     for i, rank_ in enumerate(ranks, start=1):
         try:
-            steamid64 = conv_steamid(rank_.steamid)
+            steamid64 = convert_steamid(rank_.steamid)
         except Exception as e:
             steamid64 = None
         content += f"{i}. {rank_.name} {rank_.pts_skill} {steamid64}\n"
@@ -231,9 +234,18 @@ async def map_progress(event: Event, args: Message = CommandArg()):
         return await progress.finish(cd.error)
 
     if not cd.args:
-        return await progress.finish(MessageSegment.reply(event.message_id) + "🗺地图名都不给我怎么帮你查进度 (￣^￣) ")
-
-    map_name = search_map(cd.args[0])[0]
+        if isinstance(event, GroupMessageEvent):
+            map_name = group_map_names.get(event.group_id, DEFAULT_MAP)
+        elif isinstance(event, PrivateMessageEvent):
+            map_name = private_map_names.get(event.user_id, DEFAULT_MAP)
+        else:
+            map_name = DEFAULT_MAP
+    else:
+        map_name = search_map(cd.args[0])[0]
+        if isinstance(event, GroupMessageEvent):
+            group_map_names[event.group_id] = map_name
+        elif isinstance(event, PrivateMessageEvent):
+            private_map_names[event.user_id] = map_name
 
     query_url = (
         f"https://api.gokz.top/records/{cd.steamid}?mode={cd.mode}&map_name={map_name}"

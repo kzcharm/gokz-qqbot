@@ -9,10 +9,9 @@ from nonebot.adapters.onebot.v11.bot import Bot
 from nonebot.adapters.onebot.v11.event import GroupRequestEvent
 from nonebot.adapters.onebot.v11.message import MessageSegment
 
-from .kzglobal import handle_kz
 from ..database.deps import SessionDep
 from ..database.models import User
-from ..utils.steam_user import conv_steamid
+from ..utils.steam_user import convert_steamid
 
 join_group = on_request(
     priority=1,
@@ -45,7 +44,7 @@ async def _grh(bot: Bot, event: GroupRequestEvent, session: SessionDep):
         comment = event.comment.strip()
         steamid = re.findall(re.compile('答案：(.*)'), comment)[0].strip()
         try:
-            steamid = conv_steamid(steamid)
+            steamid = convert_steamid(steamid)
         except ValueError:
             reason = f'Steamid格式不正确'
             await join_group.send(f'{event.user_id} 申请入群失败')

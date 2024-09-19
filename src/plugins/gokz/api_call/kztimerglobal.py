@@ -1,14 +1,14 @@
 from datetime import datetime
 
 from src.plugins.gokz.utils.kreedz import format_kzmode
-from src.plugins.gokz.utils.steam_user import conv_steamid
+from src.plugins.gokz.utils.steam_user import convert_steamid
 from ..api_call.helper import fetch_get
 
 GLOBAL_API_URL = "https://kztimerglobal.com/api/v2.0/"
 
 
 async def fetch_global_stats(steamid64, mode_str, has_tp=True) -> list:
-    steamid64 = conv_steamid(steamid64, 64)
+    steamid64 = convert_steamid(steamid64, 64)
     params = {
         'steamid64': steamid64,
         'tickrate': 128,
@@ -22,7 +22,7 @@ async def fetch_global_stats(steamid64, mode_str, has_tp=True) -> list:
 
 
 async def fetch_personal_recent(steamid64, mode='kzt'):
-    steamid64 = conv_steamid(steamid64, 64)
+    steamid64 = convert_steamid(steamid64, 64)
     mode = format_kzmode(mode)
 
     data_with_tp = await fetch_global_stats(steamid64, mode, True)
@@ -37,7 +37,7 @@ async def fetch_personal_recent(steamid64, mode='kzt'):
 
 
 async def fetch_personal_best(steamid64, map_name, mode='kzt', has_tp=True):
-    steamid64 = conv_steamid(steamid64, 64)
+    steamid64 = convert_steamid(steamid64, 64)
     mode = format_kzmode(mode)
 
     params = {
@@ -57,7 +57,7 @@ async def fetch_personal_best(steamid64, map_name, mode='kzt', has_tp=True):
 
 
 async def fetch_personal_bans(steamid64):
-    steamid64 = conv_steamid(steamid64, 64)
+    steamid64 = convert_steamid(steamid64, 64)
 
     params = {
         'steamid64': str(steamid64),
@@ -88,7 +88,7 @@ async def fetch_world_record(map_name, mode='kzt', has_tp=True):
 async def fetch_personal_purity(steamid64, mode='kzt', exclusive=False) -> dict:
     server_id = [1683, 1633, 1393]
 
-    steamid64 = conv_steamid(steamid64, 64)
+    steamid64 = convert_steamid(steamid64, 64)
     mode = format_kzmode(mode)
 
     data_with_tp = await fetch_global_stats(steamid64, mode, True)

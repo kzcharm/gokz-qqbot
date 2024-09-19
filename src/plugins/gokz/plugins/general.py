@@ -12,7 +12,7 @@ from sqlmodel import Session, select
 from ..database.db import engine, create_db_and_tables
 from ..database.models import User, Leaderboard
 from ..utils.kreedz import format_kzmode
-from ..utils.steam_user import conv_steamid
+from ..utils.steam_user import convert_steamid
 
 create_db_and_tables()
 
@@ -33,7 +33,7 @@ async def _():
 async def bind_steamid(bot: Bot, event: Event, args: Message = CommandArg()):
     if steamid := args.extract_plain_text():
         try:
-            steamid = conv_steamid(steamid)
+            steamid = convert_steamid(steamid)
         except ValueError:
             return await bind.finish(MessageSegment.reply(event.message_id) + "Steamid格式不正确")
     else:

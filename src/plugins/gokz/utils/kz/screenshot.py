@@ -16,7 +16,7 @@ from selenium.webdriver.support.wait import WebDriverWait
 
 from src.plugins.gokz.utils.file_oper import check_last_modified_date
 from src.plugins.gokz.utils.kreedz import format_kzmode
-from src.plugins.gokz.utils.steam_user import conv_steamid
+from src.plugins.gokz.utils.steam_user import convert_steamid
 
 require("nonebot_plugin_localstore")
 
@@ -47,10 +47,10 @@ def random_card():
 
 
 def kzgoeu_screenshot(steamid, kz_mode, force_update=False):
-    steamid = conv_steamid(steamid)
+    steamid = convert_steamid(steamid)
     kz_mode = format_kzmode(kz_mode, 'm')
 
-    steamid64 = conv_steamid(steamid, 64)
+    steamid64 = convert_steamid(steamid, 64)
 
     cache_file = store.get_cache_file("plugin_name", f"{steamid64}_{kz_mode}.png")
 
@@ -95,9 +95,9 @@ def kzgoeu_screenshot(steamid, kz_mode, force_update=False):
 
 
 def vnl_screenshot(steamid, force_update=False):
-    steamid64 = conv_steamid(steamid, 2)
-    steamid = conv_steamid(steamid)
-    steamid64 = conv_steamid(steamid, 64)
+    steamid64 = convert_steamid(steamid, 2)
+    steamid = convert_steamid(steamid)
+    steamid64 = convert_steamid(steamid, 64)
 
     cache_file = store.get_cache_file("plugin_name", f"{steamid64}_kz_vanilla.png")
 

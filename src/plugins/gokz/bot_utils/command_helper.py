@@ -1,5 +1,6 @@
 import argparse
 import shlex
+import re
 from dataclasses import dataclass, field, asdict
 from typing import Optional, Tuple
 
@@ -8,6 +9,7 @@ from sqlmodel import Session
 from ..database.db import engine
 from ..database.models import User
 from ..utils.kreedz import format_kzmode
+from ..utils.steam_user import convert_steamid
 
 
 @dataclass
@@ -65,6 +67,9 @@ class CommandData:
 
 
 def parse_args(text: str) -> dict:
+    steamid64_pattern = re.compile(r"7656119\d{10}")
+    steamid_pattern = re.compile(r"STEAM_[0-1]:[0-1]:\d+")
+
     parser = argparse.ArgumentParser(description='Parse arguments from a text string.')
     parser.add_argument('args', nargs='*', help='Positional arguments before the flags')
     parser.add_argument('-M', '--map_name', type=str, help='Name of the map')
@@ -74,10 +79,22 @@ def parse_args(text: str) -> dict:
     parser.add_argument('-u', '--update', action='store_true', help='Update flag')
 
     try:
-        args = parser.parse_args(shlex.split(text))
-        result = vars(args)
+        args = shlex.split(text)
+        parsed_args = parser.parse_args(args)
+
+        # Search for steamid64 or steamid in the positional arguments
+        for arg in parsed_args.args:
+            if steamid64_pattern.match(arg):
+                parsed_args.steamid = arg  # Treat as steamid64
+                break
+            elif steamid_pattern.match(arg):
+                parsed_args.steamid = convert_steamid(arg, 64)  # Convert to steamid64
+                break
+
+        result = vars(parsed_args)
         result['args'] = tuple(result['args'])
         return result
+
     except argparse.ArgumentError as e:
         return {'error': f'Argument error: {str(e)}'}
     except SystemExit:

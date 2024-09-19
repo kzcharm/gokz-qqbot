@@ -4,7 +4,7 @@ from textwrap import dedent
 from zoneinfo import ZoneInfo
 
 from nonebot import on_command, logger
-from nonebot.adapters.onebot.v11 import Bot, Event, Message, MessageSegment
+from nonebot.adapters.onebot.v11 import Bot, Event, Message, MessageSegment, GroupMessageEvent, PrivateMessageEvent
 from nonebot.params import CommandArg
 
 from ..api_call.kztimerglobal import fetch_personal_best, fetch_personal_recent, fetch_world_record, fetch_personal_bans
@@ -21,7 +21,10 @@ kz = on_command('kz', aliases={'kzgo'})
 wr = on_command('wr')
 ban_ = on_command('ban')
 
-global_map = 'bkz_cakewalk'
+private_map_names: dict[int, str] = {}  # For private messages
+group_map_names: dict[int, str] = {}  # For group messages
+
+DEFAULT_MAP = 'bkz_cakewalk'
 
 
 def convert_to_shanghai_time(date_str):
@@ -78,15 +81,29 @@ async def _(event: Event, args: Message = CommandArg()):
     cd = CommandData(event, args)
     if cd.error:
         return await wr.finish(cd.error)
-    if not cd.args:
-        return await wr.finish("🗺地图名都不给我怎么帮你查WR (￣^￣) ")
 
-    map_name = search_map(cd.args[0])[0]
+    if not cd.args:
+        if isinstance(event, GroupMessageEvent):
+            map_name = group_map_names.get(event.group_id, DEFAULT_MAP)
+        elif isinstance(event, PrivateMessageEvent):
+            map_name = private_map_names.get(event.user_id, DEFAULT_MAP)
+        else:
+            map_name = DEFAULT_MAP
+
+        if not map_name:
+            return await wr.finish("🗺地图名都不给我怎么帮你查WR (￣^￣) ")
+    else:
+        map_name = search_map(cd.args[0])[0]
+        if isinstance(event, GroupMessageEvent):
+            group_map_names[event.group_id] = map_name
+        elif isinstance(event, PrivateMessageEvent):
+            private_map_names[event.user_id] = map_name
+
     kz_mode = cd.mode
 
     content = dedent(f"""
         ╔ 地图:　{map_name}
-        ║ 难度:　T{MAP_TIERS[map_name]}
+        ║ 难度:　T{MAP_TIERS.get(map_name, '未知')}
         ║ 模式:　{kz_mode}
         ╠═════存点记录═════
     """).strip()
@@ -115,7 +132,6 @@ async def _(event: Event, args: Message = CommandArg()):
             ║ 服务器:　{pro['server_name']}
             ╚ {record_format_time(pro['created_on'])}═══
         """)
-
     except IndexError:
         content += f"\n未发现裸跳记录:"
 
@@ -124,26 +140,6 @@ async def _(event: Event, args: Message = CommandArg()):
 
     if map_name == 'kz_hb_fafnir':
         await wr.send(MessageSegment.record(Path('data/gokz/sound/fafnir.silk')))
-
-
-@kz.handle()
-async def handle_kz(bot: Bot, event: Event, args: Message = CommandArg()):
-    cd = CommandData(event, args)
-    if cd.error:
-        return await bot.send(event, cd.error)
-
-    if cd.mode == "kz_vanilla":
-        await bot.send(event, "客服小祥正在为您: 生成vnl.kz图片...")
-        url = await vnl_screenshot_async(cd.steamid, force_update=cd.update)
-    else:
-        await bot.send(event, "客服小祥正在为您: 生成kzgo.eu图片...")
-        url = await kzgoeu_screenshot_async(cd.steamid, cd.mode, force_update=cd.update)
-
-    image_path = Path(url)
-    if image_path.exists():
-        await bot.send(event, MessageSegment.image(image_path))
-    else:
-        await bot.send(event, "图片生成失败，请稍后重试。")
 
 
 @pr.handle()
@@ -165,8 +161,10 @@ async def handle_pr(bot: Bot, event: Event, args: Message = CommandArg()):
         ║ 服务器:　{data['server_name']}
         ╚ {record_format_time(data['created_on'])} ═══""").strip()
 
-    global global_map
-    global_map = data['map_name']
+    if isinstance(event, GroupMessageEvent):
+        group_map_names[event.group_id] = data['map_name']
+    elif isinstance(event, PrivateMessageEvent):
+        private_map_names[event.user_id] = data['map_name']
 
     combined_message = MessageSegment.image(get_map_img_url(data['map_name'])) + MessageSegment.text(content)
 
@@ -175,17 +173,23 @@ async def handle_pr(bot: Bot, event: Event, args: Message = CommandArg()):
 
 @pb.handle()
 async def map_pb(bot: Bot, event: Event, args: Message = CommandArg()):
-    global global_map
     cd = CommandData(event, args)
     if cd.error:
         return await pb.finish(cd.error)
 
     if not cd.args:
-        map_name = global_map
-        # return await pb.finish("🗺地图名都不给我怎么帮你查PB (￣^￣) ")
+        if isinstance(event, GroupMessageEvent):
+            map_name = group_map_names.get(event.group_id, DEFAULT_MAP)
+        elif isinstance(event, PrivateMessageEvent):
+            map_name = private_map_names.get(event.user_id, DEFAULT_MAP)
+        else:
+            map_name = DEFAULT_MAP
     else:
         map_name = search_map(cd.args[0])[0]
-        global_map = map_name
+        if isinstance(event, GroupMessageEvent):
+            group_map_names[event.group_id] = map_name
+        elif isinstance(event, PrivateMessageEvent):
+            private_map_names[event.user_id] = map_name
 
     content = dedent(f"""
         ╔ 地图:　{map_name}
@@ -229,3 +233,24 @@ async def map_pb(bot: Bot, event: Event, args: Message = CommandArg()):
     combined_message = MessageSegment.image(get_map_img_url(map_name)) + MessageSegment.text(content)
 
     await bot.send(event, combined_message)
+
+
+@kz.handle()
+async def handle_kz(bot: Bot, event: Event, args: Message = CommandArg()):
+    cd = CommandData(event, args)
+    if cd.error:
+        return await bot.send(event, cd.error)
+
+    if cd.mode == "kz_vanilla":
+        await bot.send(event, "客服小祥正在为您: 生成vnl.kz图片...")
+        url = await vnl_screenshot_async(cd.steamid, force_update=cd.update)
+    else:
+        await bot.send(event, "客服小祥正在为您: 生成kzgo.eu图片...")
+        url = await kzgoeu_screenshot_async(cd.steamid, cd.mode, force_update=cd.update)
+
+    image_path = Path(url)
+    if image_path.exists():
+        await bot.send(event, MessageSegment.image(image_path))
+    else:
+        await bot.send(event, "图片生成失败，请稍后重试。")
+

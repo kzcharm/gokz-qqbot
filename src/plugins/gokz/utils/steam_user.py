@@ -9,7 +9,7 @@ from nonebot import logger
 from src.plugins.gokz.config import STEAM_API_KEY
 
 
-def conv_steamid(steamid, target_type: int | str = 2, url=False):
+def convert_steamid(steamid, target_type: int | str = 2, url=False):
     logger.debug(f"Converting SteamID: {steamid} to type: {target_type}")
     steamid = SteamID(steamid)
     if steamid.is_valid() is False:
@@ -63,11 +63,11 @@ async def retrieve_steamid(steamid_or_url) -> str | None:
             return None
 
     else:
-        return conv_steamid(steamid_or_url)
+        return convert_steamid(steamid_or_url)
 
 
 async def check_steam_bans(steamid) -> dict | None:
-    steam64 = conv_steamid(steamid, 64)
+    steam64 = convert_steamid(steamid, 64)
 
     url = f'http://api.steampowered.com/ISteamUser/GetPlayerBans/v1/?key={STEAM_API_KEY}&steamids={steam64}'
 
@@ -102,7 +102,7 @@ async def get_steam_user_info(steamid, timeout=5.0) -> dict | None:
                 'loccityid': int
             }
     """
-    steamid = conv_steamid(steamid, 64)
+    steamid = convert_steamid(steamid, 64)
 
     url = f"https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key={STEAM_API_KEY}&steamids={steamid}"
 
