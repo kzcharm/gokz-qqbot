@@ -1,24 +1,65 @@
+import math
 from datetime import datetime
 from textwrap import dedent
 
 import aiohttp
 from nonebot import on_command, Bot, logger
-from nonebot.adapters.onebot.v11 import MessageEvent as Event, Message, MessageSegment
+from nonebot.adapters.onebot.v11 import MessageEvent as Event, Message, MessageSegment, GroupMessageEvent
 from nonebot.params import CommandArg
+from nonebot.permission import SUPERUSER
 
 from ..api_call.dataclasses import LeaderboardData
 from ..api_call.helper import fetch_get
 from ..bot_utils.command_helper import CommandData
+from ..database.deps import SessionDep
+from ..database.models import User
 from ..utils.formatter import format_gruntime, diff_seconds_to_time
 from ..utils.kreedz import search_map
 from ..utils.kz.records import count_servers
+from ..utils.steam_user import conv_steamid
 
 rank = on_command('rank', aliases={'排行'})
 progress = on_command('pg', aliases={'progress', 'mp', '进度', 'jd', "mapprogress"})
 ccf = on_command('ccf', aliases={'查成分'})
 pk = on_command('pk', aliases={'pk'})
 find = on_command('find', aliases={'查找'})
+group_rank = on_command('群排名', aliases={'group_rank'}, permission=SUPERUSER)
 BASE = "https://api.gokz.top/"
+
+
+@group_rank.handle()
+async def _(bot: Bot, session: SessionDep, event: GroupMessageEvent):
+    logger.info("Writing member list")
+    members = await bot.get_group_member_list(group_id=event.group_id)
+    qid_list = [str(member['user_id']) for member in members]
+    ranks = []
+    for qid in qid_list:
+        user = session.get(User, str(qid))
+        if not user:
+            print(f'user {qid} not found')
+            continue
+        url = f'{BASE}leaderboard/{user.steamid}?mode=kz_timer'
+        try:
+            rank_data = await fetch_get(url, timeout=10)
+            # if rank_data.get('detail'):
+            #     return await rank.finish(MessageSegment.reply(event.message_id) + rank_data.get('detail'))
+            data = LeaderboardData.from_dict(rank_data)
+            ranks.append(data)
+        except Exception as e:
+            print(str(e))
+        # except AttributeError:
+        #     return await rank.finish("获取数据失败，请稍后再试。")
+        # except KeyError:
+        #     return await rank.finish("无法解析排行榜数据，请稍后再试。")
+    ranks.sort(key=lambda x: x.pts_skill if x.pts_skill is not None else -math.inf, reverse=True)
+    content = ''
+    for i, rank_ in enumerate(ranks, start=1):
+        try:
+            steamid64 = conv_steamid(rank_.steamid)
+        except Exception as e:
+            steamid64 = None
+        content += f"{i}. {rank_.name} {rank_.pts_skill} {steamid64}\n"
+    await group_rank.send(content)
 
 
 @find.handle()
@@ -168,6 +209,7 @@ async def gokz_top_rank(event: Event, args: Message = CommandArg()):
         f"""     
         昵称:　　　{data.name}
         steamid:　 {data.steamid}
+        模式:　　　{cd.mode}
         Rating:　　{data.pts_skill}
         段位:　　　{data.rank_name}
         排名:　　　No.{data.rank}

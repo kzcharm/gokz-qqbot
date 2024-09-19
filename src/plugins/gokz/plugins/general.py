@@ -4,7 +4,7 @@ from pathlib import Path
 from textwrap import dedent
 
 from nonebot import on_command
-from nonebot.adapters.onebot.v11 import Bot, MessageEvent as Event, Message, MessageSegment
+from nonebot.adapters.onebot.v11 import Bot, MessageEvent as Event, Message, MessageSegment, GroupMessageEvent, PrivateMessageEvent
 from nonebot.params import CommandArg
 from sqlalchemy.exc import NoResultFound
 from sqlmodel import Session, select

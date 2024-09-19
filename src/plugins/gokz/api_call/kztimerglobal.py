@@ -56,6 +56,21 @@ async def fetch_personal_best(steamid64, map_name, mode='kzt', has_tp=True):
         return None
 
 
+async def fetch_personal_bans(steamid64):
+    steamid64 = conv_steamid(steamid64, 64)
+
+    params = {
+        'steamid64': str(steamid64),
+    }
+
+    url = "https://kztimerglobal.com/api/v2.0/bans"
+    data = await fetch_get(url, params=params)
+    if data:
+        return data
+    else:
+        return None
+
+
 async def fetch_world_record(map_name, mode='kzt', has_tp=True):
     mode = format_kzmode(mode)
     params = {
